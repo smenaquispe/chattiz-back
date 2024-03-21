@@ -3,15 +3,16 @@ namespace chattiz_back.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using chattiz_back.Models;
 using chattiz_back.Services;
+using chattiz_back.Dto;
 
 
 [Route("api/[controller]")]
 [ApiController]
 public class ChatController : ControllerBase
 {
-    private readonly IChatService _chatService;
+    private readonly IChatRepository _chatService;
 
-    public ChatController(IChatService chatService)
+    public ChatController(IChatRepository chatService)
     {
         _chatService = chatService;
     }
@@ -45,7 +46,7 @@ public class ChatController : ControllerBase
     [HttpPost("create")]
     public async Task<ActionResult<ChatModel>> CreateChat([FromBody] ChatCreateModel chatCreateModel)
     {
-        var chat = await _chatService.CreateChat(chatCreateModel.Name!, chatCreateModel.UserId!);
+        var chat = await _chatService.CreateChat(chatCreateModel.Name!, chatCreateModel.UserIds!);
 
         if(chat == null)
         {
@@ -69,9 +70,9 @@ public class ChatController : ControllerBase
     }
 
     [HttpPut("update-status")]
-    public async Task<ActionResult<ChatModel>> UpdateStatusChat([FromBody] ChatModel chatModel)
+    public async Task<ActionResult<ChatModel>> UpdateStatusChat([FromBody] ChatUserModel chatUserModel)
     {
-        var chat = await _chatService.UpdateStatusChat(chatModel.Id!, chatModel.Status ?? ChatStatus.None, chatModel.LastMessager!, chatModel.NumberOfMessages);
+        var chat = await _chatService.UpdateStatusChat(chatUserModel.ChatId!, chatUserModel.UserId!, chatUserModel.Status ?? ChatStatus.None, chatUserModel.LastMessager!, chatUserModel.NumberOfMessages);
 
         if(chat == null)
         {
@@ -94,10 +95,10 @@ public class ChatController : ControllerBase
         return Ok(chat);
     }
 
-    [HttpPost("add-user")]
-    public async Task<ActionResult<ChatModel>> AddUserToChat([FromBody] string chatId, string userId)
+    [HttpPost("add-users")]
+    public async Task<ActionResult<ChatModel>> AddUsersToChat([FromBody] ChatAddUsers chatAddUsers)
     {
-        var chat = await _chatService.AddUserToChat(chatId, userId);
+        var chat = await _chatService.AddUsersToChat(chatAddUsers.ChatId!, chatAddUsers.UserIds!);
 
         if(chat == null)
         {
@@ -108,9 +109,9 @@ public class ChatController : ControllerBase
     }
 
     [HttpDelete("remove-user")]
-    public async Task<ActionResult<ChatModel>> RemoveUserFromChat([FromBody] string chatId, string userId)
+    public async Task<ActionResult<ChatModel>> RemoveUserFromChat([FromBody] ChatRemoveUser chatRemoveUser)
     {
-        var chat = await _chatService.RemoveUserFromChat(chatId, userId);
+        var chat = await _chatService.RemoveUserFromChat(chatRemoveUser.ChatId!, chatRemoveUser.UserId!);
 
         if(chat == null)
         {

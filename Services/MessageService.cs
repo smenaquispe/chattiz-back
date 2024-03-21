@@ -1,7 +1,10 @@
 namespace chattiz_back.Services;
-using chattiz_back.Models;
 
-public interface IMessageService
+using chattiz_back.Models;
+using chattiz_back.Data;
+using Microsoft.EntityFrameworkCore;
+
+public interface IMessageRepository
 {
     Task<MessageModel?> GetMessage(string id);
     Task<IEnumerable<MessageModel>> GetMessages(string chatId);
@@ -10,38 +13,68 @@ public interface IMessageService
     Task<MessageModel?> DeleteMessage(string id);
 }
 
-public class MessageService : IMessageService
+public class MessageService : IMessageRepository
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly ApplicationDbContext _context;
 
-    public MessageService(IMessageRepository messageRepository)
+    public MessageService(ApplicationDbContext context)
     {
-        _messageRepository = messageRepository;
+        _context = context;
     }
 
     public async Task<MessageModel?> CreateMessage(string chatId, string senderId, string content)
     {
-        return await _messageRepository.CreateMessage(chatId, senderId, content);
+        var message = new MessageModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            ChatId = chatId,
+            SenderId = senderId,
+            Content = content,
+            SentAt = DateTime.Now
+        };
+
+        _context.Messages.Add(message);
+        await _context.SaveChangesAsync();
+
+        return message;
     }
 
     public async Task<MessageModel?> DeleteMessage(string id)
     {
-        return await _messageRepository.DeleteMessage(id);
+        var message = await _context.Messages.FindAsync(id);
+        if (message == null)
+        {
+            return null;
+        }
+
+        _context.Messages.Remove(message);
+        await _context.SaveChangesAsync();
+
+        return message;
     }
 
     public async Task<MessageModel?> GetMessage(string id)
     {
-        return await _messageRepository.GetMessage(id);
+        return await _context.Messages.FindAsync(id);
     }
 
     public async Task<IEnumerable<MessageModel>> GetMessages(string chatId)
     {
-        return await _messageRepository.GetMessages(chatId);
+        return await _context.Messages.Where(m => m.ChatId == chatId).ToListAsync();
     }
 
     public async Task<MessageModel?> UpdateMessage(string id, string content)
     {
-        return await _messageRepository.UpdateMessage(id, content);
+        var message = await _context.Messages.FindAsync(id);
+        if (message == null)
+        {
+            return null;
+        }
+
+        message.Content = content;
+        await _context.SaveChangesAsync();
+
+        return message;
     }
 
 }

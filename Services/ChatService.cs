@@ -1,68 +1,156 @@
 namespace chattiz_back.Services;
-using chattiz_back.Models;
 
-public interface IChatService
+using chattiz_back.Models;
+using chattiz_back.Data;
+using Microsoft.EntityFrameworkCore;
+
+
+public interface IChatRepository
 {
     Task<ChatModel?> GetChat(string id);
+
     Task<IEnumerable<ChatModel>> GetChats(string userId);
-    Task<ChatModel?> CreateChat(string name, string userId);
+    Task<ChatModel?> CreateChat(string name, string[] userIds);
     Task<ChatModel?> UpdateChat(string id, string name);
-    Task<ChatModel?> UpdateStatusChat(string id, ChatStatus status, string lastMessager, int? numberOfMessages = null);
+    Task<ChatUserModel?> UpdateStatusChat(string chatId, string userId, ChatStatus status, string lastMessager, int? numberOfMessages = null);
 
     Task<ChatModel?> DeleteChat(string id);
-    Task<ChatUserModel?> AddUserToChat(string chatId, string userId);
-
+    Task<ChatUserModel[]?> AddUsersToChat(string chatId, string[] userIds);
     Task<ChatModel?> RemoveUserFromChat(string chatId, string userId);
 }
 
-public class ChatService : IChatService
+public class ChatService : IChatRepository
 {
-    private readonly IChatRepository _chatRepository;
+    private readonly ApplicationDbContext _context;
 
-    public ChatService(IChatRepository chatRepository)
+    public ChatService(ApplicationDbContext context)
     {
-        _chatRepository = chatRepository;
+        _context = context;
     }
 
-    public async Task<ChatUserModel?> AddUserToChat(string chatId, string userId)
+    public async Task<ChatModel?> CreateChat(string name, string[] userIds)
     {
-        return await _chatRepository.AddUserToChat(chatId, userId);
-    }
+        var chat = new ChatModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = name
+        };
 
-    public async Task<ChatModel?> CreateChat(string name, string userId)
-    {
-        return await _chatRepository.CreateChat(name, userId);
+        _context.Chats.Add(chat);
+        foreach (var userId in userIds)
+        {
+            _context.ChatUsers.Add(new ChatUserModel
+            {
+                ChatId = chat.Id,
+                UserId = userId
+            });
+        }
+        
+        await _context.SaveChangesAsync();
+
+        return chat;
     }
 
     public async Task<ChatModel?> DeleteChat(string id)
     {
-        return await _chatRepository.DeleteChat(id);
+        var chat = await _context.Chats.FindAsync(id);
+        if (chat == null)
+        {
+            return null;
+        }
+
+        _context.Chats.Remove(chat);
+
+        _context.ChatUsers.RemoveRange(_context.ChatUsers.Where(cu => cu.ChatId == id));
+
+        await _context.SaveChangesAsync();
+
+        return chat;
     }
 
     public async Task<ChatModel?> GetChat(string id)
     {
-        return await _chatRepository.GetChat(id);
+        return await _context.Chats.FindAsync(id);
     }
 
     public async Task<IEnumerable<ChatModel>> GetChats(string userId)
     {
-        return await _chatRepository.GetChats(userId);
-    }
-
-    public async Task<ChatModel?> RemoveUserFromChat(string chatId, string userId)
-    {
-        return await _chatRepository.RemoveUserFromChat(chatId, userId);
+        return await _context.ChatUsers
+            .Where(cu => cu.UserId == userId)
+            .Join(_context.Chats, cu => cu.ChatId, c => c.Id, (cu, c) => c)
+            .ToArrayAsync();
     }
 
     public async Task<ChatModel?> UpdateChat(string id, string name)
     {
-        return await _chatRepository.UpdateChat(id, name);
+        var chat = await _context.Chats.FindAsync(id);
+        if (chat == null)
+        {
+            return null;
+        }
+
+        chat.Name = name;
+        await _context.SaveChangesAsync();
+
+        return chat;
     }
 
-    public async Task<ChatModel?> UpdateStatusChat(string id, ChatStatus status, string lastMessager, int? numberOfMessages = null)
+    public async Task<ChatUserModel[]?> AddUsersToChat(string chatId, string[] userId)
     {
-        return await _chatRepository.UpdateStatusChat(id, status, lastMessager, numberOfMessages);
+
+        ChatUserModel[] chatUsers = [];
+
+        foreach (var id in userId)
+        {
+            var chatUser = new ChatUserModel
+            {
+                ChatId = chatId,
+                UserId = id
+            };
+
+            chatUsers.Append(chatUser);
+
+            await _context.ChatUsers.AddAsync(chatUser);
+        }
+       
+        await _context.SaveChangesAsync();
+
+        return chatUsers;
     }
 
-    
+    public async Task<ChatUserModel?> UpdateStatusChat(string chatId, string userId, ChatStatus status, string lastMessager, int? numberOfMessages = null)
+    {
+        var chatUser = await _context.ChatUsers
+            .Where(cu => cu.ChatId == chatId && cu.UserId == userId)
+            .FirstOrDefaultAsync();
+        
+
+        if (chatUser == null)
+        {
+            return null;
+        }
+
+        chatUser.Status = status;
+        chatUser.LastMessager = lastMessager;
+        if (numberOfMessages != null)
+        {
+            chatUser.NumberOfMessages = numberOfMessages.Value;
+        }
+
+        await _context.SaveChangesAsync();
+        
+        return chatUser;
+    }
+
+    public async Task<ChatModel?> RemoveUserFromChat(string chatId, string userId)
+    {
+
+        var chatUser = await _context.ChatUsers
+            .Where(cu => cu.ChatId == chatId && cu.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        var chat = await _context.Chats.FindAsync(chatId);
+
+        return chat;
+    }
 }

@@ -1,7 +1,12 @@
 namespace chattiz_back.Services;
-using chattiz_back.Models;
 
-public interface IUserService
+using chattiz_back.Models;
+using chattiz_back.Data;
+using chattiz_back.Utils;
+using Microsoft.EntityFrameworkCore;
+
+
+public interface IUserRepository
 {
     Task<UserModel?> GetUser(string id);
     Task<UserModel?> GetUser(string email, string password);
@@ -14,38 +19,86 @@ public interface IUserService
 
 }
 
-public class UserService : IUserService
+public class UserService : IUserRepository
 {
-    private readonly IUserRepository _userRepository;
 
-    public UserService(IUserRepository userRepository)
+    private readonly ApplicationDbContext _context;
+
+    public UserService(ApplicationDbContext context)
     {
-        _userRepository = userRepository;
+        _context = context;
     }
 
     public async Task<UserModel?> CreateUser(string username, string email, string password)
     {
-        return await _userRepository.CreateUser(username, email, password);
+        var user = new UserModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Username = username,
+            Email = email,
+            Password = HashCrypter.HashPassword(password)
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return user;
     }
 
     public async Task<UserModel?> DeleteUser(string id)
     {
-        return await _userRepository.DeleteUser(id);
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+        {
+            return null;
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        return user;
     }
 
     public async Task<UserModel?> GetUser(string id)
     {
-        return await _userRepository.GetUser(id);
+        return await _context.Users.FindAsync(id);
     }
 
     public async Task<UserModel?> GetUser(string email, string password)
     {
-        return await _userRepository.GetUser(email, password);
+        var res = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if(res == null)
+        {
+            return null;
+        }
+
+        var isPasswordValid = HashCrypter.VerifyPassword(password, res.Password ?? "");
+        if(!isPasswordValid)
+        {
+            return null;
+        }
+
+        return res;
+
     }
 
     public async Task<UserModel?> UpdateUser(string id, string username, string email, string password)
     {
-        return await _userRepository.UpdateUser(id, username, email, password);
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+        {
+            return null;
+        }
+
+        user.Username = username;
+        user.Email = email;
+        user.Password = HashCrypter.HashPassword(password);
+
+        await _context.SaveChangesAsync();
+
+        return user;
     }
 
-}
+
+};

@@ -9,9 +9,9 @@ using chattiz_back.Services;
 [ApiController]
 public class MessageController : ControllerBase
 {
-    private readonly  MessageService _messageService;
+    private readonly  IMessageRepository _messageService;
 
-    public MessageController(MessageService messageService)
+    public MessageController(IMessageRepository messageService)
     {
         _messageService = messageService;
     }

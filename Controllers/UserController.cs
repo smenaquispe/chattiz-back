@@ -8,9 +8,9 @@ using chattiz_back.Services;
 [ApiController]
 public class UserController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly IUserRepository _userService;
 
-    public UserController(IUserService userService)
+    public UserController(IUserRepository userService)
     {
         _userService = userService;
     }

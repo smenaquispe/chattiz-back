@@ -24,13 +24,9 @@ public class Startup {
 
         /* Añadiendo servicios */
 
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IMessageService, MessageService>();
-        services.AddScoped<IMessageRepository, MessageRepository>();
-        services.AddScoped<IChatService, ChatService>();
-        services.AddScoped<IChatRepository, ChatRepository>();
-
+        services.AddScoped<IUserRepository, UserService>();
+        services.AddScoped<IMessageRepository, MessageService>();
+        services.AddScoped<IChatRepository, ChatService>();
         
     }
 
