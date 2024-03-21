@@ -15,7 +15,7 @@ public interface IChatRepository
     Task<ChatModel?> UpdateStatusChat(string id, ChatStatus status, string lastMessager, int? numberOfMessages = null);
 
     Task<ChatModel?> DeleteChat(string id);
-    Task<ChatModel?> AddUserToChat(string chatId, string userId);
+    Task<ChatUserModel?> AddUserToChat(string chatId, string userId);
     Task<ChatModel?> RemoveUserFromChat(string chatId, string userId);
 }
 
@@ -33,10 +33,16 @@ public class ChatRepository : IChatRepository
         var chat = new ChatModel
         {
             Id = Guid.NewGuid().ToString(),
-            Name = name
+            Status = ChatStatus.None
         };
 
         _context.Chats.Add(chat);
+        _context.ChatUsers.Add(new ChatUserModel
+        {
+            ChatId = chat.Id,
+            UserId = userId
+        });
+
         await _context.SaveChangesAsync();
 
         await AddUserToChat(chat.Id, userId);
@@ -53,6 +59,9 @@ public class ChatRepository : IChatRepository
         }
 
         _context.Chats.Remove(chat);
+
+        _context.ChatUsers.RemoveRange(_context.ChatUsers.Where(cu => cu.ChatId == id));
+
         await _context.SaveChangesAsync();
 
         return chat;
@@ -65,9 +74,10 @@ public class ChatRepository : IChatRepository
 
     public async Task<IEnumerable<ChatModel>> GetChats(string userId)
     {
-        return await _context.Chats
-            .Where(c => c.Participants!.Any(u => u == userId))
-            .ToListAsync();
+        return await _context.ChatUsers
+            .Where(cu => cu.UserId == userId)
+            .Join(_context.Chats, cu => cu.ChatId, c => c.Id, (cu, c) => c)
+            .ToArrayAsync();
     }
 
     public async Task<ChatModel?> UpdateChat(string id, string name)
@@ -84,18 +94,18 @@ public class ChatRepository : IChatRepository
         return chat;
     }
 
-    public async Task<ChatModel?> AddUserToChat(string chatId, string userId)
+    public async Task<ChatUserModel?> AddUserToChat(string chatId, string userId)
     {
-        var chat = await _context.Chats.FindAsync(chatId);
-        if (chat == null)
+        var chatUser = new ChatUserModel
         {
-            return null;
-        }
+            ChatId = chatId,
+            UserId = userId
+        };
 
-        chat.Participants = chat.Participants!.Append(userId).ToArray();
+        await _context.ChatUsers.AddAsync(chatUser);
         await _context.SaveChangesAsync();
 
-        return chat;
+        return chatUser;
     }
 
     public async Task<ChatModel?> UpdateStatusChat(string id, ChatStatus status, string lastMessager, int? numberOfMessages = null)
@@ -121,14 +131,12 @@ public class ChatRepository : IChatRepository
 
     public async Task<ChatModel?> RemoveUserFromChat(string chatId, string userId)
     {
-        var chat = await _context.Chats.FindAsync(chatId);
-        if(chat == null)
-        {
-            return null;
-        }
 
-        chat.Participants = chat.Participants!.Where(u => u != userId).ToArray();
-        await _context.SaveChangesAsync();
+        var chatUser = await _context.ChatUsers
+            .Where(cu => cu.ChatId == chatId && cu.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        var chat = await _context.Chats.FindAsync(chatId);
 
         return chat;
     }

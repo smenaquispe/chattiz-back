@@ -43,9 +43,9 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("create")]
-    public async Task<ActionResult<ChatModel>> CreateChat([FromBody] string name, string userId)
+    public async Task<ActionResult<ChatModel>> CreateChat([FromBody] ChatCreateModel chatCreateModel)
     {
-        var chat = await _chatService.CreateChat(name, userId);
+        var chat = await _chatService.CreateChat(chatCreateModel.Name!, chatCreateModel.UserId!);
 
         if(chat == null)
         {
@@ -56,9 +56,9 @@ public class ChatController : ControllerBase
     }
 
     [HttpPut("update")]
-    public async Task<ActionResult<ChatModel>> UpdateChat([FromBody] string id, string name)
+    public async Task<ActionResult<ChatModel>> UpdateChat([FromBody] ChatModel chatModel)
     {
-        var chat = await _chatService.UpdateChat(id, name);
+        var chat = await _chatService.UpdateChat(chatModel.Id!, chatModel.Name!);
 
         if(chat == null)
         {
@@ -69,9 +69,9 @@ public class ChatController : ControllerBase
     }
 
     [HttpPut("update-status")]
-    public async Task<ActionResult<ChatModel>> UpdateStatusChat([FromBody] string id, ChatStatus status, string lastMessager, int? numberOfMessages = null)
+    public async Task<ActionResult<ChatModel>> UpdateStatusChat([FromBody] ChatModel chatModel)
     {
-        var chat = await _chatService.UpdateStatusChat(id, status, lastMessager, numberOfMessages);
+        var chat = await _chatService.UpdateStatusChat(chatModel.Id!, chatModel.Status ?? ChatStatus.None, chatModel.LastMessager!, chatModel.NumberOfMessages);
 
         if(chat == null)
         {

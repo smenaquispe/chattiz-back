@@ -15,4 +15,6 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<MessageModel> Messages { get; set; }
 
+    public DbSet<ChatUserModel> ChatUsers { get; set; }
+
 }

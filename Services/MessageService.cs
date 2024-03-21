@@ -12,9 +12,9 @@ public interface IMessageService
 
 public class MessageService : IMessageService
 {
-    private readonly MessageRepository _messageRepository;
+    private readonly IMessageRepository _messageRepository;
 
-    public MessageService(MessageRepository messageRepository)
+    public MessageService(IMessageRepository messageRepository)
     {
         _messageRepository = messageRepository;
     }

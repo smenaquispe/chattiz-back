@@ -10,21 +10,21 @@ public interface IChatService
     Task<ChatModel?> UpdateStatusChat(string id, ChatStatus status, string lastMessager, int? numberOfMessages = null);
 
     Task<ChatModel?> DeleteChat(string id);
-    Task<ChatModel?> AddUserToChat(string chatId, string userId);
+    Task<ChatUserModel?> AddUserToChat(string chatId, string userId);
 
     Task<ChatModel?> RemoveUserFromChat(string chatId, string userId);
 }
 
 public class ChatService : IChatService
 {
-    private readonly ChatRepository _chatRepository;
+    private readonly IChatRepository _chatRepository;
 
-    public ChatService(ChatRepository chatRepository)
+    public ChatService(IChatRepository chatRepository)
     {
         _chatRepository = chatRepository;
     }
 
-    public async Task<ChatModel?> AddUserToChat(string chatId, string userId)
+    public async Task<ChatUserModel?> AddUserToChat(string chatId, string userId)
     {
         return await _chatRepository.AddUserToChat(chatId, userId);
     }

@@ -15,20 +15,23 @@ public class Startup {
         services.AddSwaggerGen();
 
         /* MySQL */
-        var configurationString = _configuration.GetConnectionString("MySQLConnection");
+        var configurationString = _configuration.GetConnectionString("DefaultConnection");
         Console.WriteLine(configurationString);
+        
         services.AddDbContext<ApplicationDbContext>(options => {
             options.UseMySql(configurationString, ServerVersion.AutoDetect(configurationString));
         });
 
         /* Añadiendo servicios */
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IMessageRepository, MessageRepository>();
-        services.AddScoped<IMessageService, MessageService>();
-        services.AddScoped<IChatRepository, ChatRepository>();
-        services.AddScoped<IChatService, ChatService>();
 
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IMessageService, MessageService>();
+        services.AddScoped<IMessageRepository, MessageRepository>();
+        services.AddScoped<IChatService, ChatService>();
+        services.AddScoped<IChatRepository, ChatRepository>();
+
+        
     }
 
     public void Configure(WebApplication app, IWebHostEnvironment env) {
