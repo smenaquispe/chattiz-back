@@ -40,9 +40,9 @@ public class MessageController : ControllerBase
         return Ok(messages);
     }
 
-    public async Task<ActionResult<MessageModel>> CreateMessage([FromBody] string chatId, string senderId, string content)
+    public async Task<ActionResult<MessageModel>> CreateMessage([FromBody] MessageModel messageModel)
     {
-        var message = await _messageService.CreateMessage(chatId, senderId, content);
+        var message = await _messageService.CreateMessage(messageModel.ChatId!, messageModel.SenderId!, messageModel.Content!);
 
         if(message == null)
         {
@@ -52,9 +52,9 @@ public class MessageController : ControllerBase
         return Ok(message);
     }
 
-    public async Task<ActionResult<MessageModel>> UpdateMessage([FromBody] string id, string content)
+    public async Task<ActionResult<MessageModel>> UpdateMessage([FromBody] MessageModel messageModel)
     {
-        var message = await _messageService.UpdateMessage(id, content);
+        var message = await _messageService.UpdateMessage(messageModel.Id!, messageModel.Content!);
 
         if(message == null)
         {
