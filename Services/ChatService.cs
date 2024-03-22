@@ -17,6 +17,8 @@ public interface IChatRepository
     Task<ChatModel?> DeleteChat(string id);
     Task<ChatUserModel[]?> AddUsersToChat(string chatId, string[] userIds);
     Task<ChatModel?> RemoveUserFromChat(string chatId, string userId);
+
+    Task<UserModel[]?> GetUsersFromChat(string chatId);
 }
 
 public class ChatService : IChatRepository
@@ -152,5 +154,13 @@ public class ChatService : IChatRepository
         var chat = await _context.Chats.FindAsync(chatId);
 
         return chat;
+    }
+
+    public async Task<UserModel[]?> GetUsersFromChat(string chatId)
+    {
+        return await _context.ChatUsers
+            .Where(cu => cu.ChatId == chatId)
+            .Join(_context.Users, cu => cu.UserId, u => u.Id, (cu, u) => u)
+            .ToArrayAsync();
     }
 }

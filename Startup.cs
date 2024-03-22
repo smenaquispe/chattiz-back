@@ -1,6 +1,9 @@
+using System.Net.WebSockets;
 using chattiz_back.Data;
 using chattiz_back.Services;
+using chattiz_back.Utils;
 using Microsoft.EntityFrameworkCore;
+
 
 public class Startup {
     private readonly IConfiguration _configuration;
@@ -39,6 +42,10 @@ public class Startup {
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapControllers();
+
+        /* Web Sockets */
+        app.UseWebSockets();
+        app.UseWebSocketHandler();
     }
 
 };

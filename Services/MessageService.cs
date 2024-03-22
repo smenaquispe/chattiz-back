@@ -8,7 +8,7 @@ public interface IMessageRepository
 {
     Task<MessageModel?> GetMessage(string id);
     Task<IEnumerable<MessageModel>> GetMessages(string chatId);
-    Task<MessageModel?> CreateMessage(string chatId, string senderId, string content);
+    Task<MessageModel?> CreateMessage(string chatId, string senderId, string content, DateTime? sentAt = null);
     Task<MessageModel?> UpdateMessage(string id, string content);
     Task<MessageModel?> DeleteMessage(string id);
 }
@@ -22,7 +22,7 @@ public class MessageService : IMessageRepository
         _context = context;
     }
 
-    public async Task<MessageModel?> CreateMessage(string chatId, string senderId, string content)
+    public async Task<MessageModel?> CreateMessage(string chatId, string senderId, string content, DateTime? sentAt = null)
     {
         var message = new MessageModel
         {
@@ -30,7 +30,7 @@ public class MessageService : IMessageRepository
             ChatId = chatId,
             SenderId = senderId,
             Content = content,
-            SentAt = DateTime.Now
+            SentAt = sentAt ?? DateTime.Now
         };
 
         _context.Messages.Add(message);
