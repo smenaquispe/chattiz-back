@@ -25,6 +25,15 @@ public class Startup {
             options.UseMySql(configurationString, ServerVersion.AutoDetect(configurationString));
         });
 
+        /* CORS */
+        services.AddCors(options => {
+            options.AddPolicy("AllowAllOrigins", builder => {
+                builder.AllowAnyOrigin();
+                builder.AllowAnyMethod();
+                builder.AllowAnyHeader();
+            });
+        });
+
         /* Añadiendo servicios */
 
         services.AddScoped<IUserRepository, UserService>();
@@ -42,6 +51,9 @@ public class Startup {
         app.UseHttpsRedirection();
         app.UseAuthorization();
         app.MapControllers();
+
+        /* CORS */
+        app.UseCors("AllowAllOrigins");
 
         /* Web Sockets */
         app.UseWebSockets();
